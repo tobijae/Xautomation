@@ -82,9 +82,9 @@ def get_ai_analysis(market_data):
 
 def should_post(market_data):
     """Determine if market conditions warrant a post"""
-    # Post if any coin has moved more than 2% in either direction
+    # Post if any coin has moved more than 0.1% in either direction
     for coin_data in market_data.values():
-        if abs(coin_data['change_24h']) > 2:
+        if abs(coin_data['change_24h']) > 0.1:
             return True
     return False
 
