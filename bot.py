@@ -6,25 +6,36 @@ import schedule
 import time
 import os
 from dotenv import load_dotenv
+from threading import Thread
+from flask import Flask
 
 # Load environment variables
 load_dotenv()
 
-# API Credentials
+# Twitter API Credentials
 TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
 TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_SECRET = os.getenv('TWITTER_ACCESS_SECRET')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-# Initialize clients
+# Initialize Twitter client
 twitter_client = tweepy.Client(
     consumer_key=TWITTER_API_KEY,
     consumer_secret=TWITTER_API_SECRET,
     access_token=TWITTER_ACCESS_TOKEN,
     access_token_secret=TWITTER_ACCESS_SECRET
 )
+
+# Initialize OpenAI
 openai.api_key = OPENAI_API_KEY
+
+# Initialize Flask app
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
 
 def get_crypto_data():
     """Fetch detailed crypto data including price, volume, and market cap"""
@@ -48,22 +59,22 @@ def get_crypto_data():
 def get_ai_analysis(market_data):
     """Generate AI analysis of market conditions"""
     prompt = f"""
-    Analyze these crypto market conditions and provide a brief, technical market summary in 150 characters or less:
+    Analyze these crypto market conditions and provide a brief, technical market summary in 140 characters or less:
     
     BTC: ${market_data['bitcoin']['price']:,.0f} ({market_data['bitcoin']['change_24h']:.1f}%)
     ETH: ${market_data['ethereum']['price']:,.0f} ({market_data['ethereum']['change_24h']:.1f}%)
     SOL: ${market_data['solana']['price']:,.0f} ({market_data['solana']['change_24h']:.1f}%)
     
-    Include: key support/resistance levels, trend direction, or notable pattern formations.
+    Focus on key trends and potential market moves.
     """
     
     response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",  # Updated to use gpt-4o-mini
+        model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are a crypto technical analyst. Focus on key technicals and potential setups. Be concise and specific."},
+            {"role": "system", "content": "You are a crypto technical analyst. Focus on key technicals and potential setups. Be concise and specific. Use $BTC $SOL $ETH. Do not use a lot of emojis."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=100,
+        max_tokens=140,
         temperature=0.7
     )
     
@@ -120,18 +131,24 @@ def post_update():
         except Exception as e:
             print(f"Error posting tweet: {e}")
 
-def main():
+def run_bot():
     """Main function to schedule and run the bot"""
-    # Schedule 3 posts during market hours
-    schedule.every().day.at("13:30").do(post_update)  # 9:30 AM EST
-    schedule.every().day.at("18:00").do(post_update)  # 2:00 PM EST
-    schedule.every().day.at("20:00").do(post_update)  # 4:00 PM EST
+    # Schedule posts every 8 hours (3 times per day)
+    schedule.every().day.at("06:00").do(post_update)  # 6 AM UTC
+    schedule.every().day.at("14:00").do(post_update)  # 2 PM UTC
+    schedule.every().day.at("22:00").do(post_update)  # 10 PM UTC
     
-    print("Bot started. Posts scheduled for 9:30 AM, 2:00 PM, and 4:00 PM EST")
+    print("Bot started. Posts scheduled for 6:00 AM, 2:00 PM, and 10:00 PM UTC")
     
     while True:
         schedule.run_pending()
         time.sleep(60)
 
 if __name__ == "__main__":
-    main()
+    # Start the bot in a separate thread
+    bot_thread = Thread(target=run_bot)
+    bot_thread.start()
+    
+    # Start the web server
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
