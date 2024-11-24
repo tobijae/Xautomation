@@ -102,10 +102,12 @@ def post_update():
 def keep_alive():
     """Ping the service to keep it active"""
     try:
-        url = "https://xautomation.onrender.com"  # Replace with your actual Render URL
-        requests.get(url)
-        logger.info("Keep-alive ping successful")
+        url = "https://xautomation.onrender.com"
+        response = requests.get(url)
+        print(f"Keep-alive ping successful: {datetime.now()}")  # Add more visible logging
+        logger.info(f"Keep-alive ping successful: {datetime.now()}")
     except Exception as e:
+        print(f"Keep-alive ping failed: {e}")  # Add more visible logging
         logger.error(f"Keep-alive ping failed: {e}")
 
 def run_bot():
