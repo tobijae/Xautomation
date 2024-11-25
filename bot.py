@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from threading import Thread
 from flask import Flask
 import logging
+import requests 
 
 # Configuration
 themes = ["AGI development", "Human-AI merge", "Intelligence explosion", "Digital consciousness", 
