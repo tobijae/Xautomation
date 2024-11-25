@@ -104,23 +104,25 @@ def keep_alive():
     try:
         url = "https://xautomation.onrender.com"
         response = requests.get(url)
-        print(f"Keep-alive ping successful: {datetime.now()}")  # Add more visible logging
+        print(f"Keep-alive ping successful: {datetime.now()}")
         logger.info(f"Keep-alive ping successful: {datetime.now()}")
     except Exception as e:
-        print(f"Keep-alive ping failed: {e}")  # Add more visible logging
+        print(f"Keep-alive ping failed: {e}")
         logger.error(f"Keep-alive ping failed: {e}")
 
 def run_bot():
     """Main function to schedule and run the bot"""
-    # Schedule posts every 8 hours
-    schedule.every().day.at("06:00").do(post_update)  # 6 AM UTC
-    schedule.every().day.at("14:00").do(post_update)  # 2 PM UTC
-    schedule.every().day.at("22:00").do(post_update)  # 10 PM UTC
+    # Make an immediate post when starting
+    logger.info("Making initial post...")
+    post_update()  # This will post immediately when the bot starts
+    
+    # Schedule posts every 8 hours after the initial post
+    schedule.every(8).hours.do(post_update)
     
     # Add keep-alive schedule to prevent free tier spindown
     schedule.every(10).minutes.do(keep_alive)
     
-    logger.info("Bot started. Posts scheduled for 6:00 AM, 2:00 PM, and 10:00 PM UTC")
+    logger.info("Bot started. First post attempted, next posts every 8 hours")
     
     while True:
         schedule.run_pending()
