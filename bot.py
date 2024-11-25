@@ -1,5 +1,6 @@
+import openai
 import tweepy
-import requests
+import random
 from datetime import datetime
 import schedule
 import time
@@ -9,7 +10,21 @@ from threading import Thread
 from flask import Flask
 import logging
 
-# Set up logging
+# Configuration
+themes = ["AGI development", "Human-AI merge", "Intelligence explosion", "Digital consciousness", 
+         "Computational limits", "AI governance", "Neural interfaces", "Quantum AI", 
+         "AI-human cooperation", "Machine ethics"]
+
+angles = ["mainstream misconception", "hidden acceleration", "system emergence", 
+         "evolutionary leap", "technological singularity", "paradigm shift",
+         "complexity threshold", "recursive improvement"]
+
+timeframes = ["2025", "2030", "2035", "2040", "2050"]
+impact_levels = ["individual", "societal", "economic", "existential", "evolutionary"]
+tech_focus = ["hardware", "software", "biotech", "nanotech", "quantum"]
+domains = ["cognition", "consciousness", "computation", "intelligence"]
+
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -21,7 +36,7 @@ TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
 TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_SECRET = os.getenv('TWITTER_ACCESS_SECRET')
-XAI_API_KEY = os.getenv('XAI_API_KEY')
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Initialize Twitter client
 twitter_client = tweepy.Client(
@@ -36,62 +51,48 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "News Bot is running!"
+    return "i/acc Bot is running!"
 
-def get_grok_news():
-    """Get news analysis from Grok"""
-    headers = {
-        "Authorization": f"Bearer {XAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    data = {
-        "model": "grok-beta",
-        "messages": [
-            {"role": "system", "content": "You are a news curator. Provide concise, engaging summaries of the most important recent news."},
-            {"role": "user", "content": "What's the single most important or viral news story from the last 8 hours? Provide a concise summary in a single tweet (max 140 chars). Be informative and engaging, but avoid hashtags or emojis."}
-        ],
-        "max_tokens": 140,
-        "temperature": 0.7
-    }
-    
+def generate_unique_prompt():
+    """Generate unique combination for prompt"""
+    prompt = f"""Generate a provocative i/acc take on {random.choice(themes)} from a {random.choice(angles)} perspective.
+Focus on {random.choice(tech_focus)} implications by {random.choice(timeframes)}.
+Consider {random.choice(impact_levels)} impact on {random.choice(domains)}.
+Format as a viral tweet with a bold claim, evidence, and prediction.
+Maximum 280 characters. Organise it in a nice structure with paragraphs."""
+    return prompt
+
+def get_ai_take():
+    """Get AI generated take using OpenAI"""
     try:
-        response = requests.post(
-            "https://api.x.ai/v1/chat/completions",
-            headers=headers,
-            json=data
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are an intelligence accelerationist thought leader. Be provocative but insightful."},
+                {"role": "user", "content": generate_unique_prompt()}
+            ],
+            max_tokens=280,
+            temperature=0.9
         )
-        
-        if response.status_code == 200:
-            return response.json()['choices'][0]['message']['content'].strip()
-        else:
-            logger.error(f"Error from Grok API: {response.status_code}")
-            return None
-            
+        return response.choices[0].message['content'].strip()
     except Exception as e:
-        logger.error(f"Error getting news from Grok: {e}")
+        logger.error(f"Error getting AI take: {e}")
         return None
 
-def create_news_tweet():
-    """Create and format tweet with news"""
+def create_tweet():
+    """Create and format tweet"""
     try:
-        # Get Grok's news analysis
-        news_update = get_grok_news()
-        
-        if news_update:
-            time_now = datetime.now().strftime('%H:%M UTC')
-            tweet = f"News Update ({time_now})\n\n{news_update}"
-            return tweet
-        
+        ai_take = get_ai_take()
+        if ai_take:
+            return ai_take
         return None
-        
     except Exception as e:
         logger.error(f"Error creating tweet: {e}")
         return None
 
 def post_update():
-    """Post news update to Twitter"""
-    tweet = create_news_tweet()
+    """Post update to Twitter"""
+    tweet = create_tweet()
     if tweet:
         try:
             twitter_client.create_tweet(text=tweet)
@@ -104,35 +105,33 @@ def keep_alive():
     try:
         url = "https://xautomation.onrender.com"
         response = requests.get(url)
-        print(f"Keep-alive ping successful: {datetime.now()}")
         logger.info(f"Keep-alive ping successful: {datetime.now()}")
     except Exception as e:
-        print(f"Keep-alive ping failed: {e}")
         logger.error(f"Keep-alive ping failed: {e}")
 
 def run_bot():
     """Main function to schedule and run the bot"""
-    # Make an immediate post when starting
+    # Make immediate post
     logger.info("Making initial post...")
-    post_update()  # This will post immediately when the bot starts
+    post_update()
     
-    # Schedule posts every 8 hours after the initial post
-    schedule.every(8).hours.do(post_update)
+    # Schedule posts every 1.5 hours
+    schedule.every(90).minutes.do(post_update)
     
-    # Add keep-alive schedule to prevent free tier spindown
+    # Keep-alive schedule
     schedule.every(10).minutes.do(keep_alive)
     
-    logger.info("Bot started. First post attempted, next posts every 8 hours")
+    logger.info("Bot started. First post done, next posts every 1.5 hours")
     
     while True:
         schedule.run_pending()
         time.sleep(60)
 
 if __name__ == "__main__":
-    # Start the bot in a separate thread
+    # Start bot thread
     bot_thread = Thread(target=run_bot)
     bot_thread.start()
     
-    # Start the web server
+    # Start web server
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
