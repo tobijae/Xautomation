@@ -10,6 +10,7 @@ from threading import Thread
 from flask import Flask
 import logging
 import requests 
+from openai import OpenAI 
 
 # Configuration
 themes = ["AGI development", "Human-AI merge", "Intelligence explosion", "Digital consciousness", 
@@ -37,7 +38,9 @@ TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
 TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_SECRET = os.getenv('TWITTER_ACCESS_SECRET')
-openai.api_key = os.getenv('OPENAI_API_KEY')
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 # Initialize Twitter client
 twitter_client = tweepy.Client(
@@ -66,7 +69,7 @@ Maximum 280 characters. Organise it in a nice structure with paragraphs."""
 def get_ai_take():
     """Get AI generated take using OpenAI"""
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are an intelligence accelerationist thought leader. Be provocative but insightful."},
@@ -75,7 +78,7 @@ def get_ai_take():
             max_tokens=280,
             temperature=0.9
         )
-        return response.choices[0].message['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         logger.error(f"Error getting AI take: {e}")
         return None
