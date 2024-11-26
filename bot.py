@@ -56,16 +56,28 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return "i/acc Bot is running!"
-
 def generate_unique_prompt():
     """Generate unique combination for prompt"""
-    prompt = f"""Generate a provocative i/acc take on {random.choice(themes)} from a {random.choice(angles)} perspective.
+    # Randomly choose between i/acc take or cognitive fact
+    if random.random() < 0.7:  # 70% chance for i/acc takes
+        prompt = f"""Write a concise, provocative i/acc take on {random.choice(themes)} from a {random.choice(angles)} perspective.
 Focus on {random.choice(tech_focus)} implications by {random.choice(timeframes)}.
-Consider {random.choice(impact_levels)} impact on {random.choice(domains)}.
-Format as a viral tweet with a bold claim, evidence, and prediction.
-Maximum 280 characters. Organise it in a nice structure with paragraphs."""
+Format requirements:
+- No emojis
+- Max 200 characters
+- Simple, direct language
+- One main statement followed by one supporting point
+- End with impact/prediction
+Keep it clear and human-like."""
+    else:  # 30% chance for cognitive facts
+        prompt = """Share an interesting fact about human cognition, AI, or consciousness.
+Requirements:
+- No emojis
+- Max 140 characters
+- Start with 'Fact:' or 'Consider:'
+- Make it thought-provoking but accessible
+- Focus on lesser-known insights"""
     return prompt
-
 def get_ai_take():
     """Get AI generated take using OpenAI"""
     try:
