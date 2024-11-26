@@ -25,6 +25,48 @@ timeframes = ["2025", "2030", "2035", "2040", "2050"]
 impact_levels = ["individual", "societal", "economic", "existential", "evolutionary"]
 tech_focus = ["hardware", "software", "biotech", "nanotech", "quantum"]
 domains = ["cognition", "consciousness", "computation", "intelligence"]
+cognitive_topics = [
+    # AI & Tech (Major Focus)
+    "artificial general intelligence development",
+    "machine learning capabilities",
+    "neural network processing",
+    "AI consciousness possibility",
+    "technological singularity",
+    "AI learning patterns",
+    "machine cognition",
+    "algorithmic thinking",
+    "computational intelligence",
+    "AI decision making",
+    "synthetic neural networks",
+    "artificial consciousness",
+    "machine self-awareness",
+    "digital intelligence evolution",
+    "AI information processing",
+    
+    # Human Cognition
+    "memory formation and recall",
+    "decision-making patterns",
+    "attention mechanisms",
+    "pattern recognition",
+    "learning optimization",
+    "consciousness states",
+    "perception mechanisms",
+    "cognitive biases",
+    "dream states",
+    "intuitive processing",
+    
+    # Interface & Future
+    "brain-computer interfaces",
+    "neural enhancement",
+    "cognitive augmentation",
+    "mind uploading potential",
+    "human-AI convergence",
+    "cognitive architectures",
+    "intelligence amplification",
+    "synthetic cognition",
+    "digital consciousness transfer",
+    "cognitive computation"
+]
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -56,28 +98,34 @@ app = Flask(__name__)
 @app.route('/')
 def home():
     return "i/acc Bot is running!"
+
 def generate_unique_prompt():
     """Generate unique combination for prompt"""
     # Randomly choose between i/acc take or cognitive fact
     if random.random() < 0.7:  # 70% chance for i/acc takes
-        prompt = f"""Write a concise, provocative i/acc take on {random.choice(themes)} from a {random.choice(angles)} perspective.
-Focus on {random.choice(tech_focus)} implications by {random.choice(timeframes)}.
+        # 30% chance to include timeframe
+        timeframe_part = f"by {random.choice(timeframes)}" if random.random() < 0.3 else ""
+        prompt = f"""Write a provocative i/acc take on {random.choice(themes)} from a {random.choice(angles)} perspective.
+Focus on {random.choice(tech_focus)} implications {timeframe_part}.
 Format requirements:
-- No emojis
+- No emojis or hashtags
 - Max 200 characters
+- Each sentence on new line
+- Start all sentences with lowercase
+- No periods at end of sentences
 - Simple, direct language
-- One main statement followed by one supporting point
-- End with impact/prediction
-Keep it clear and human-like."""
+- Make it feel raw and authentic"""
     else:  # 30% chance for cognitive facts
-        prompt = """Share an interesting fact about human cognition, AI, or consciousness.
+        prompt = f"""Share an interesting fact about {random.choice(cognitive_topics)}.
 Requirements:
-- No emojis
+- No emojis or hashtags
 - Max 140 characters
-- Start with 'Fact:' or 'Consider:'
-- Make it thought-provoking but accessible
-- Focus on lesser-known insights"""
+- Start with lowercase
+- No periods at end of sentences
+- Each statement on new line
+- Raw, authentic style"""
     return prompt
+         
 def get_ai_take():
     """Get AI generated take using OpenAI"""
     try:
