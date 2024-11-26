@@ -12,19 +12,41 @@ import logging
 import requests 
 from openai import OpenAI 
 
-# Configuration
-themes = ["AGI development", "Human-AI merge", "Intelligence explosion", "Digital consciousness", 
-         "Computational limits", "AI governance", "Neural interfaces", "Quantum AI", 
-         "AI-human cooperation", "Machine ethics"]
+# Enhanced theme lists for more variety
+themes = [
+    # Core AI/Tech themes
+    "AGI development", "Human-AI merge", "Intelligence explosion", 
+    "Digital consciousness", "Computational limits", "AI governance",
+    "Neural interfaces", "Quantum AI", "AI-human cooperation", "Machine ethics",
+    
+    # New diverse themes
+    "Digital biology", "Information ecology", "Cognitive enhancement",
+    "Silicon evolution", "Metaverse economics", "Synthetic biology",
+    "Cultural acceleration", "Technological art", "Digital sociology",
+    "Tech inequality", "Post-scarcity economics", "Digital governance"
+]
 
-angles = ["mainstream misconception", "hidden acceleration", "system emergence", 
-         "evolutionary leap", "technological singularity", "paradigm shift",
-         "complexity threshold", "recursive improvement"]
+angles = [
+    # Original perspectives
+    "mainstream misconception", "hidden acceleration", "system emergence",
+    "evolutionary leap", "technological singularity", "paradigm shift",
+    "complexity threshold", "recursive improvement",
+    
+    # New perspectives
+    "historical parallel", "biological metaphor", "economic impact",
+    "cultural transformation", "psychological shift", "philosophical paradox",
+    "social consequence", "environmental impact", "political disruption",
+    "artistic vision", "educational revolution", "market dynamics"
+]
 
-timeframes = ["2025", "2030", "2035", "2040", "2050"]
-impact_levels = ["individual", "societal", "economic", "existential", "evolutionary"]
-tech_focus = ["hardware", "software", "biotech", "nanotech", "quantum"]
-domains = ["cognition", "consciousness", "computation", "intelligence"]
+timeframes = ["2025", "2030", "2035", "2040", "2050", "this decade", "next decade"]
+impact_levels = ["individual", "societal", "economic", "existential", "evolutionary", 
+                "cultural", "psychological", "biological", "political", "environmental"]
+tech_focus = ["hardware", "software", "biotech", "nanotech", "quantum", 
+              "neurotechnology", "robotics", "clean tech", "space tech", "grid computing"]
+domains = ["cognition", "consciousness", "computation", "intelligence",
+          "creativity", "emotion", "learning", "memory", "perception", "decision-making"]
+
 cognitive_topics = [
     # AI & Tech (Major Focus)
     "artificial general intelligence development",
@@ -37,35 +59,30 @@ cognitive_topics = [
     "algorithmic thinking",
     "computational intelligence",
     "AI decision making",
-    "synthetic neural networks",
-    "artificial consciousness",
-    "machine self-awareness",
-    "digital intelligence evolution",
-    "AI information processing",
     
-    # Human Cognition
-    "memory formation and recall",
-    "decision-making patterns",
-    "attention mechanisms",
-    "pattern recognition",
-    "learning optimization",
-    "consciousness states",
-    "perception mechanisms",
-    "cognitive biases",
-    "dream states",
-    "intuitive processing",
+    # New Technical Topics
+    "quantum neural networks",
+    "biomimetic computing",
+    "neuromorphic engineering",
+    "edge intelligence",
+    "swarm cognition",
+    "hybrid intelligence systems",
     
-    # Interface & Future
+    # Human-AI Interface
     "brain-computer interfaces",
     "neural enhancement",
     "cognitive augmentation",
     "mind uploading potential",
     "human-AI convergence",
     "cognitive architectures",
-    "intelligence amplification",
-    "synthetic cognition",
-    "digital consciousness transfer",
-    "cognitive computation"
+    
+    # Societal Impact
+    "digital ethics evolution",
+    "algorithmic governance",
+    "collective intelligence",
+    "technological unemployment",
+    "augmented society",
+    "digital immortality"
 ]
 
 # Logging setup
@@ -99,46 +116,83 @@ app = Flask(__name__)
 def home():
     return "i/acc Bot is running!"
 
+def format_tweet(text):
+    """Format tweet with proper spacing and length"""
+    # Split into sentences and filter empty ones
+    sentences = [s.strip() for s in text.split('\n') if s.strip()]
+    
+    # Add double line breaks between sentences
+    formatted_text = '\n\n'.join(sentences)
+    
+    # Ensure length limit
+    if len(formatted_text) > 240:
+        sentences = formatted_text.split('\n\n')
+        formatted_text = ''
+        for sentence in sentences:
+            if len(formatted_text + '\n\n' + sentence) <= 237:
+                formatted_text += '\n\n' + sentence if formatted_text else sentence
+            else:
+                break
+        formatted_text = formatted_text.strip() + '...' if len(formatted_text) > 237 else formatted_text
+    
+    return formatted_text
+
 def generate_unique_prompt():
     """Generate unique combination for prompt"""
-    # Randomly choose between i/acc take or cognitive fact
-    if random.random() < 0.7:  # 70% chance for i/acc takes
-        # 30% chance to include timeframe
-        timeframe_part = f"by {random.choice(timeframes)}" if random.random() < 0.3 else ""
-        prompt = f"""Write a provocative i/acc take on {random.choice(themes)} from a {random.choice(angles)} perspective.
-Focus on {random.choice(tech_focus)} implications {timeframe_part}.
-Format requirements:
-- No emojis or hashtags
-- Max 200 characters
-- Each sentence on new line
-- Start all sentences with lowercase
-- No periods at end of sentences
-- Simple, direct language
-- Make it feel raw and authentic"""
-    else:  # 30% chance for cognitive facts
-        prompt = f"""Share an interesting fact about {random.choice(cognitive_topics)}.
+    prompt_type = random.random()
+    
+    if prompt_type < 0.4:  # 40% chance for technology focus
+        focus = random.choice(tech_focus)
+        theme = random.choice(themes)
+        timeframe = random.choice(timeframes) if random.random() < 0.3 else None
+        prompt = f"""Write a provocative i/acc take about {focus} in relation to {theme}"""
+        if timeframe:
+            prompt += f" by {timeframe}"
+            
+    elif prompt_type < 0.7:  # 30% chance for societal impact
+        impact = random.choice(impact_levels)
+        domain = random.choice(domains)
+        prompt = f"""Explore the {impact} implications of accelerating {domain}"""
+        
+    else:  # 30% chance for cognitive/philosophical
+        topic = random.choice(cognitive_topics)
+        angle = random.choice(angles)
+        prompt = f"""Share an insight about {topic} from a {angle} perspective"""
+
+    prompt += """
 Requirements:
-- No emojis or hashtags
-- Max 140 characters
-- Start with lowercase
-- No periods at end of sentences
 - Each statement on new line
-- Raw, authentic style"""
+- Start with lowercase
+- No periods at end
+- Raw, authentic style
+- Keep under 240 chars total
+- Avoid recent themes and metaphors
+- Focus on one clear idea"""
+
     return prompt
-         
+
 def get_ai_take():
     """Get AI generated take using OpenAI"""
     try:
+        system_prompt = """You are an intelligence accelerationist thought leader.
+        Each response should focus on a single unique aspect rather than trying to cover everything.
+        Vary between optimistic and critical perspectives.
+        Be provocative but insightful.
+        Use concrete examples and specific scenarios when possible."""
+        
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are an intelligence accelerationist thought leader. Be provocative but insightful."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": generate_unique_prompt()}
             ],
             max_tokens=280,
             temperature=0.9
         )
-        return response.choices[0].message.content.strip()
+        
+        # Format the response
+        text = response.choices[0].message.content.strip()
+        return format_tweet(text)
     except Exception as e:
         logger.error(f"Error getting AI take: {e}")
         return None
