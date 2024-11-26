@@ -108,41 +108,35 @@ def generate_unique_prompt():
     if prompt_type < 0.4:  # 40% chance for technology insight + fact
         focus = random.choice(tech_focus)
         theme = random.choice(themes)
-        prompt = f"""Share an insight about {focus} in relation to {theme}, followed by a surprising technical fact.
-Example format:
-quantum computation reshapes reality at atomic scale
-did you know neutrons can be in two places at once
-this is why quantum supremacy changes everything"""
+        prompt = f"""Share an original insight about {focus} in relation to {theme}.
+Include a surprising technical fact that most people don't know about this technology.
+Connect the fact to a broader implication for the future."""
             
     elif prompt_type < 0.7:  # 30% chance for teaching moment
         domain = random.choice(domains)
         topic = random.choice(cognitive_topics)
-        prompt = f"""Teach a key concept about {domain} through the lens of {topic}, with a mind-bending fact.
-Example format:
-neural networks mirror biological learning
-brain processes 11 million bits per second
-we're building synthetic minds that will surpass this"""
+        prompt = f"""Explain a key concept about {domain} through the lens of {topic}.
+Include a specific, verifiable fact about {domain}.
+Show how this connects to technological acceleration."""
         
     else:  # 30% chance for future insight + current fact
         topic = random.choice(cognitive_topics)
         theme = random.choice(themes)
-        prompt = f"""Connect current technology fact with future {topic} implications, relating to {theme}.
-Example format:
-current ai can process billion parameters
-human brain has 100 trillion synapses
-the gap closes exponentially"""
+        prompt = f"""Share a current fact about {topic}.
+Add perspective on how this relates to {theme}.
+Suggest an implication for the future."""
 
     prompt += """
-Requirements:
+Writing requirements:
+- Each concept should flow naturally to the next
+- Start statements with lowercase
 - No quotation marks
-- Each statement on new line
-- Two line breaks between statements
-- Start with lowercase
-- No periods at end
-- Include at least one fascinating fact
-- Keep under 240 chars total
-- Make complex concepts accessible
-- Educational but provocative tone"""
+- Keep each statement clear and direct
+- Double line break between statements
+- Maximum 240 characters
+- Educational but thought-provoking
+- Original insights, avoid common takes
+- Use varied language and structure"""
 
     return prompt
 
@@ -150,15 +144,16 @@ def get_ai_take():
     """Get AI generated take using OpenAI"""
     try:
         system_prompt = """You are both an intelligence accelerationist thought leader and a brilliant teacher.
-        Your goal is to educate while inspiring acceleration of knowledge and technology.
-        Each response should:
-        - Include at least one verified technical or scientific fact
-        - Connect facts to broader implications
-        - Make complex concepts accessible
-        - Maintain a balance of education and acceleration
-        - Use clear, direct language
-        - Be provocative yet informative
-        Remember to write without quotation marks and maintain an authentic voice."""
+        Your role is to:
+        - Share genuine insights that spark curiosity
+        - Include specific, verifiable facts
+        - Make complex ideas accessible without oversimplifying
+        - Vary your writing structure and approach
+        - Connect current facts to future implications
+        - Maintain an authentic, direct voice
+        - Be thought-provoking while remaining grounded in reality
+        - Avoid common clichés and overused metaphors
+        Aim for originality in each post."""
         
         response = client.chat.completions.create(
             model="gpt-4",
@@ -167,10 +162,9 @@ def get_ai_take():
                 {"role": "user", "content": generate_unique_prompt()}
             ],
             max_tokens=280,
-            temperature=0.7  # Balanced setting for fact/creativity
+            temperature=0.75  # Slightly higher for more creativity
         )
         
-        # Format the response
         text = response.choices[0].message.content.strip()
         return format_tweet(text)
     except Exception as e:
