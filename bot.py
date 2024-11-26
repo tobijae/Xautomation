@@ -143,7 +143,7 @@ Writing requirements:
 def get_ai_take():
     """Get AI generated take using OpenAI"""
     try:
-system_prompt = """You are an intelligence accelerationist thought leader and brilliant teacher who drives understanding through provocative insights.
+        system_prompt = """You are an intelligence accelerationist thought leader and brilliant teacher who drives understanding through provocative insights.
 
 Your mission is to:
 - Challenge conventional thinking about technology while making complex ideas accessible
@@ -174,7 +174,7 @@ Each post should combine educational value with accelerationist vision, teaching
                 {"role": "user", "content": generate_unique_prompt()}
             ],
             max_tokens=280,
-            temperature=0.75  # Slightly higher for more creativity
+            temperature=0.75
         )
         
         text = response.choices[0].message.content.strip()
