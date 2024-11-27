@@ -168,7 +168,7 @@ Writing style:
 Each post should combine educational value with accelerationist vision, teaching through the lens of technological transformation."""
         
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": generate_unique_prompt()}
