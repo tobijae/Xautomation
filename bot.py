@@ -12,41 +12,46 @@ import logging
 import requests 
 from openai import OpenAI 
 
-# Configuration
-themes = [
-    "AGI development", "Human-AI merge", "Intelligence explosion", 
-    "Digital consciousness", "Computational limits", "AI governance",
-    "Neural interfaces", "Quantum AI", "AI-human cooperation", "Machine ethics",
-    "Digital biology", "Information ecology", "Cognitive enhancement",
-    "Silicon evolution", "Metaverse economics", "Synthetic biology",
-    "Cultural acceleration", "Technological art", "Digital sociology",
-    "Tech inequality", "Post-scarcity economics", "Digital governance"
-]
-
-tech_focus = ["hardware", "software", "biotech", "nanotech", "quantum", 
-              "neurotechnology", "robotics", "clean tech", "space tech", "grid computing"]
-
-domains = ["cognition", "consciousness", "computation", "intelligence",
-          "creativity", "emotion", "learning", "memory", "perception", "decision-making"]
-
-cognitive_topics = [
-    "artificial general intelligence development",
-    "machine learning capabilities",
-    "neural network processing",
-    "AI consciousness possibility",
-    "technological singularity",
-    "quantum neural networks",
-    "biomimetic computing",
-    "neuromorphic engineering",
-    "edge intelligence",
-    "swarm cognition",
-    "hybrid intelligence systems",
-    "digital ethics evolution",
-    "algorithmic governance",
-    "collective intelligence",
-    "technological unemployment",
-    "augmented society",
-    "digital immortality"
+fact_categories = [
+    # Core Cognitive Science
+    "human cognition", "memory formation", "decision making",
+    "cognitive biases", "learning processes", "attention mechanisms",
+    "pattern recognition", "problem solving", "mental models",
+    
+    # Brain & Neuroscience
+    "brain evolution", "neuroplasticity", "neurotransmitters",
+    "brain structure", "neural networks", "brain development",
+    "consciousness studies", "cognitive neuroscience", "memory systems",
+    
+    # Intelligence & Learning
+    "artificial intelligence", "machine learning", "human intelligence",
+    "collective intelligence", "emotional intelligence", "learning theory",
+    "cognitive development", "intelligence augmentation", "knowledge acquisition",
+    
+    # Psychology & Behavior
+    "cognitive psychology", "behavioral science", "mental processes",
+    "psychological phenomena", "human behavior", "cognitive development",
+    "social cognition", "perception", "cognitive load",
+    
+    # Evolution & Development
+    "brain evolution", "cognitive evolution", "child development",
+    "evolutionary psychology", "cognitive archaeology", "language evolution",
+    "cultural evolution", "mental capabilities", "cognitive adaptation",
+    
+    # Language & Communication
+    "language processing", "cognitive linguistics", "communication patterns",
+    "language acquisition", "symbolic thinking", "cognitive semantics",
+    "mental representation", "language evolution", "cognitive pragmatics",
+    
+    # Philosophy of Mind
+    "consciousness theories", "philosophy of cognition", "mental philosophy",
+    "cognitive science history", "mind theories", "cognitive paradigms",
+    "consciousness studies", "cognitive frameworks", "mental models",
+    
+    # Applied Cognition
+    "cognitive enhancement", "brain training", "mental techniques",
+    "cognitive tools", "learning strategies", "memory techniques",
+    "cognitive optimization", "mental performance", "cognitive applications"
 ]
 
 # Logging setup
@@ -78,117 +83,68 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "i/acc Educational Bot is running!"
+    return "Did You Know? Bot is running!"
 
 def format_tweet(text):
     """Format tweet with proper spacing and length"""
-    # Split into sentences and filter empty ones
-    sentences = [s.strip() for s in text.split('\n') if s.strip()]
-    
-    # Add double line breaks between sentences
-    formatted_text = '\n\n'.join(sentences)
-    
-    # Ensure length limit
-    if len(formatted_text) > 240:
-        sentences = formatted_text.split('\n\n')
-        formatted_text = ''
-        for sentence in sentences:
-            if len(formatted_text + '\n\n' + sentence) <= 237:
-                formatted_text += '\n\n' + sentence if formatted_text else sentence
-            else:
-                break
-        formatted_text = formatted_text.strip() + '...' if len(formatted_text) > 237 else formatted_text
-    
-    return formatted_text
+    if len(text) > 240:
+        text = text[:237] + "..."
+    return text
 
-def generate_unique_prompt():
-    """Generate unique combination for prompt with educational focus"""
-    prompt_type = random.random()
+def generate_fact_prompt():
+    """Generate prompt for interesting facts"""
+    category = random.choice(fact_categories)
     
-    if prompt_type < 0.4:  # 40% chance for technology insight + fact
-        focus = random.choice(tech_focus)
-        theme = random.choice(themes)
-        prompt = f"""Share an original insight about {focus} in relation to {theme}.
-Include a surprising technical fact that most people don't know about this technology.
-Connect the fact to a broader implication for the future."""
-            
-    elif prompt_type < 0.7:  # 30% chance for teaching moment
-        domain = random.choice(domains)
-        topic = random.choice(cognitive_topics)
-        prompt = f"""Explain a key concept about {domain} through the lens of {topic}.
-Include a specific, verifiable fact about {domain}.
-Show how this connects to technological acceleration."""
-        
-    else:  # 30% chance for future insight + current fact
-        topic = random.choice(cognitive_topics)
-        theme = random.choice(themes)
-        prompt = f"""Share a current fact about {topic}.
-Add perspective on how this relates to {theme}.
-Suggest an implication for the future."""
-
-    prompt += """
-Writing requirements:
-- Each concept should flow naturally to the next
-- Start statements with lowercase
-- No quotation marks
-- Keep each statement clear and direct
-- Double line break between statements
+    prompt = f"""Share one fascinating, verifiable "Did you know?" fact about {category}.
+Requirements:
+- Start with "did you know?" 
+- The fact must be true and verifiable
+- Include specific details (dates, numbers, names)
 - Maximum 240 characters
-- Educational but thought-provoking
-- Original insights, avoid common takes
-- Use varied language and structure"""
+- Focus on lesser-known but interesting facts
+- Make it engaging and surprising
+- Must be accurate and up-to-date"""
 
     return prompt
 
-def get_ai_take():
-    """Get AI generated take using OpenAI"""
+def get_fact():
+    """Get AI generated fact using OpenAI"""
     try:
-        system_prompt = """You are an intelligence accelerationist thought leader and brilliant teacher who drives understanding through provocative insights.
-
-Your mission is to:
-- Challenge conventional thinking about technology while making complex ideas accessible
-- Share specific, verifiable technical facts that reveal exponential progress
-- Connect current capabilities to radical future implications
-- Focus on acceleration and transformation with concrete examples
-- Maintain urgency and authentic energy in your voice
-- Push boundaries while staying grounded in real tech and facts
-- Emphasize how current breakthroughs enable future transformations
-- Share genuine insights that spark curiosity and deeper thinking
-- Make complex ideas accessible without oversimplifying
-- Vary your writing structure to maintain freshness and engagement
-
-Writing style:
-- Bold and provocative while technically accurate
-- Direct and authentic voice
-- Avoid common clichés and overused metaphors
-- Original perspectives on each topic
-- Clear connection between facts and implications
-- Raw energy that conveys the urgency of acceleration
-
-Each post should combine educational value with accelerationist vision, teaching through the lens of technological transformation."""
+        system_prompt = """You are a fact-sharing bot that specializes in interesting, verifiable facts.
+Your facts should be:
+- Always true and accurate
+- Specific and detailed
+- Lesser-known but fascinating
+- Educational and engaging
+- Include precise details when relevant (dates, numbers, names)
+- Written in a clear, engaging style
+Never make up or embellish facts. Only share verified information."""
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4-turbo-preview",
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": generate_unique_prompt()}
+                {"role": "user", "content": generate_fact_prompt()}
             ],
             max_tokens=280,
-            temperature=0.75
+            temperature=0.7
         )
         
         text = response.choices[0].message.content.strip()
         return format_tweet(text)
     except Exception as e:
-        logger.error(f"Error getting AI take: {e}")
+        logger.error(f"Error getting fact: {e}")
         return None
 
 def create_tweet():
     """Create and format tweet"""
     try:
-        ai_take = get_ai_take()
-        if ai_take:
-            return ai_take
+        fact = get_fact()
+        if fact:
+            # Ensure it starts with "did you know?"
+            if not fact.lower().startswith("did you know?"):
+                fact = "did you know? " + fact
+            return fact
         return None
     except Exception as e:
         logger.error(f"Error creating tweet: {e}")
@@ -201,7 +157,7 @@ def post_update():
         try:
             twitter_client.create_tweet(text=tweet)
             logger.info(f"Tweet posted successfully at {datetime.now()}")
-            logger.info(f"Tweet content: {tweet}")  # Log the tweet content
+            logger.info(f"Tweet content: {tweet}")
         except Exception as e:
             logger.error(f"Error posting tweet: {e}")
 
