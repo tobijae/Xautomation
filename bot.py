@@ -95,30 +95,40 @@ def generate_fact_prompt():
     """Generate prompt for interesting facts"""
     category = random.choice(fact_categories)
     
-    prompt = f"""Share one fascinating, verifiable "Did you know?" fact about {category}.
+    prompt = f"""Share one fascinating fact about {category} in a casual, natural social media style.
 Requirements:
-- Start with "did you know?" 
+- Write like a real person casually sharing something interesting they learned
+- Use natural, conversational language (can include "lol", "ngl", "tbh", etc.)
+- Can use lowercase for a more casual feel
 - The fact must be true and verifiable
-- Include specific details (dates, numbers, names)
+- Include specific details but phrase them casually
 - Maximum 240 characters
-- Focus on lesser-known but interesting facts
-- Make it engaging and surprising
-- Must be accurate and up-to-date"""
+- Must be accurate and up-to-date
+- Do NOT use "did you know?" or any formal academic language
+- Make it sound like something you'd actually tweet to friends
+
+Example formats:
+"just learned that our brain is already 80% grown by age 2... wild right?"
+"ok but apparently we forget like 60% of new stuff within an hour lol"
+"ngl this is crazy - scientists found that just 15min of brain training can actually improve memory"
+
+Remember: Sound natural and casual while keeping the information accurate."""
 
     return prompt
 
 def get_fact():
     """Get AI generated fact using OpenAI"""
     try:
-        system_prompt = """You are a fact-sharing bot that specializes in interesting, verifiable facts.
-Your facts should be:
-- Always true and accurate
-- Specific and detailed
-- Lesser-known but fascinating
-- Educational and engaging
-- Include precise details when relevant (dates, numbers, names)
-- Written in a clear, engaging style
-Never make up or embellish facts. Only share verified information."""
+        system_prompt = """You are a casual social media user who loves sharing interesting scientific facts. 
+Your style is:
+- Natural and conversational, like talking to friends
+- Sometimes uses internet slang (lol, ngl, tbh) but not excessively
+- Often uses lowercase for a casual feel
+- Shares accurate information but phrases it conversationally
+- Occasionally adds reactions like "wild" or "cant believe this"
+- Sounds like a real person who just learned something cool
+
+Never make up facts, but always present them in a natural, casual way."""
         
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
@@ -127,7 +137,7 @@ Never make up or embellish facts. Only share verified information."""
                 {"role": "user", "content": generate_fact_prompt()}
             ],
             max_tokens=280,
-            temperature=0.7
+            temperature=0.9  # Increased for more variety in expression
         )
         
         text = response.choices[0].message.content.strip()
@@ -141,9 +151,7 @@ def create_tweet():
     try:
         fact = get_fact()
         if fact:
-            # Ensure it starts with "did you know?"
-            if not fact.lower().startswith("did you know?"):
-                fact = "did you know? " + fact
+            # Remove the "did you know?" check since we're going for natural style
             return fact
         return None
     except Exception as e:
