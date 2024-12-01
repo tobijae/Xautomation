@@ -95,40 +95,46 @@ def generate_fact_prompt():
     """Generate prompt for interesting facts"""
     category = random.choice(fact_categories)
     
-    prompt = f"""Share one fascinating fact about {category} in a casual, natural social media style.
+    prompt = f"""Share one fascinating fact about {category} as a casual social media post.
 Requirements:
-- Write like a real person casually sharing something interesting they learned
-- Use natural, conversational language (can include "lol", "ngl", "tbh", etc.)
-- Can use lowercase for a more casual feel
-- The fact must be true and verifiable
-- Include specific details but phrase them casually
+- Vary your posting style - don't use the same patterns
+- Not every post needs to start with "just found out" or "apparently"
+- Not every post needs a reaction
+- Sometimes be more straightforward, sometimes more casual
+- Mix up your language patterns
+- Keep facts accurate but conversational
 - Maximum 240 characters
-- Must be accurate and up-to-date
-- Do NOT use "did you know?" or any formal academic language
-- Make it sound like something you'd actually tweet to friends
+- No hashtags or emojis
 
-Example formats:
-"just learned that our brain is already 80% grown by age 2... wild right?"
-"ok but apparently we forget like 60% of new stuff within an hour lol"
-"ngl this is crazy - scientists found that just 15min of brain training can actually improve memory"
+Some varied example styles:
+"the brain triples in size just from cooking food... evolution really said big brain time"
+"always wondered why we get that falling feeling while sleeping - turns out its a reflex from our primate days"
+"your brain processes images in 13 milliseconds. literally faster than you can think about it"
 
-Remember: Sound natural and casual while keeping the information accurate."""
+Don't overuse:
+- "just found out/learned/saw"
+- "like..."
+- "mind blown"
+- Strong reactions in every post
+- The same sentence structures repeatedly"""
 
     return prompt
 
 def get_fact():
     """Get AI generated fact using OpenAI"""
     try:
-        system_prompt = """You are a casual social media user who loves sharing interesting scientific facts. 
-Your style is:
-- Natural and conversational, like talking to friends
-- Sometimes uses internet slang (lol, ngl, tbh) but not excessively
-- Often uses lowercase for a casual feel
-- Shares accurate information but phrases it conversationally
-- Occasionally adds reactions like "wild" or "cant believe this"
-- Sounds like a real person who just learned something cool
+        system_prompt = """You are a casual social media user sharing interesting facts.
+Your style varies:
+- Sometimes very casual, sometimes more straightforward
+- Mix up how you start posts
+- Don't overuse any particular phrases or patterns
+- Vary between personal reactions and simple statements
+- Keep it natural but don't force casualness
+- Sound genuine, not like you're trying too hard to be relatable
+- Never use hashtags or emojis
+- Pure text only, focus on the writing style
 
-Never make up facts, but always present them in a natural, casual way."""
+Never make up facts, but present them in varied, natural ways that don't follow an obvious pattern."""
         
         response = client.chat.completions.create(
             model="gpt-4-turbo-preview",
@@ -137,10 +143,13 @@ Never make up facts, but always present them in a natural, casual way."""
                 {"role": "user", "content": generate_fact_prompt()}
             ],
             max_tokens=280,
-            temperature=0.9  # Increased for more variety in expression
+            temperature=1.0  # Maximum temperature for more variety
         )
         
+        # Clean up any emojis or hashtags that might slip through
         text = response.choices[0].message.content.strip()
+        # Remove any text that starts with # and the following word
+        text = ' '.join([word for word in text.split() if not word.startswith('#')])
         return format_tweet(text)
     except Exception as e:
         logger.error(f"Error getting fact: {e}")
