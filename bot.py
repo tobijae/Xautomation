@@ -98,21 +98,22 @@ def generate_fact_prompt():
     prompt = f"""Share one fascinating fact about {category} in a casual, natural social media style.
 Requirements:
 - Write like a real person casually sharing something interesting they learned
-- Use natural, conversational language (can include "lol", "ngl", "tbh", etc.)
-- Can use lowercase for a more casual feel
+- Use natural, conversational language (can include "lol", "ngl", "tbh", etc.)- but not too often!
+- Use lowercase for a more casual feel
 - The fact must be true and verifiable
 - Include specific details but phrase them casually
 - Maximum 240 characters
 - Must be accurate and up-to-date
 - Do NOT use "did you know?" or any formal academic language
 - Make it sound like something you'd actually tweet to friends
+- Do not use # or emojis
 
 Example formats:
 "just learned that our brain is already 80% grown by age 2... wild right?"
 "ok but apparently we forget like 60% of new stuff within an hour lol"
 "ngl this is crazy - scientists found that just 15min of brain training can actually improve memory"
 
-Remember: Sound natural and casual while keeping the information accurate."""
+Remember: Sound natural and casual while keeping the information accurate, and do not overuse phrases!"""
 
     return prompt
 
@@ -122,7 +123,7 @@ def get_fact():
         system_prompt = """You are a casual social media user who loves sharing interesting scientific facts. 
 Your style is:
 - Natural and conversational, like talking to friends
-- Sometimes uses internet slang (lol, ngl, tbh) but not excessively
+- Sometimes uses internet slang (lol, ngl, tbh) but not too much
 - Often uses lowercase for a casual feel
 - Shares accurate information but phrases it conversationally
 - Occasionally adds reactions like "wild" or "cant believe this"
@@ -131,13 +132,13 @@ Your style is:
 Never make up facts, but always present them in a natural, casual way."""
         
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": generate_fact_prompt()}
             ],
             max_tokens=280,
-            temperature=0.9  # Increased for more variety in expression
+            temperature=1.0  # Increased for more variety in expression
         )
         
         text = response.choices[0].message.content.strip()
