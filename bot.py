@@ -106,7 +106,8 @@ Requirements:
 - Must be accurate and up-to-date
 - Do NOT use "did you know?" or any formal academic language
 - Make it sound like something you'd actually tweet to friends
-- Do not use # or emojis
+- Do not use #
+- Do not use emojis
 
 Example formats:
 "just learned that our brain is already 80% grown by age 2... wild right?"
@@ -128,6 +129,8 @@ Your style is:
 - Shares accurate information but phrases it conversationally
 - Occasionally adds reactions like "wild" or "cant believe this"
 - Sounds like a real person who just learned something cool
+- Do not use #
+- Do not use emojis
 
 Never make up facts, but always present them in a natural, casual way."""
         
