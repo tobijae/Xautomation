@@ -9,50 +9,109 @@ from dotenv import load_dotenv
 from threading import Thread
 from flask import Flask
 import logging
-import requests 
-from openai import OpenAI 
+import requests
+from openai import OpenAI
 
-fact_categories = [
-    # Core Cognitive Science
-    "human cognition", "memory formation", "decision making",
-    "cognitive biases", "learning processes", "attention mechanisms",
-    "pattern recognition", "problem solving", "mental models",
+# Content themes for the aesthetic
+content_themes = [
+    # Tech x Anime fusion
+    "tech acceleration", "digital escape", "virtual dreams",
+    "ai consciousness", "digital enlightenment", "cyber aesthetics",
     
-    # Brain & Neuroscience
-    "brain evolution", "neuroplasticity", "neurotransmitters",
-    "brain structure", "neural networks", "brain development",
-    "consciousness studies", "cognitive neuroscience", "memory systems",
+    # Cultural commentary
+    "online existence", "digital identity", "virtual society",
+    "artificial dreams", "digital evolution", "tech spirituality",
     
-    # Intelligence & Learning
-    "artificial intelligence", "machine learning", "human intelligence",
-    "collective intelligence", "emotional intelligence", "learning theory",
-    "cognitive development", "intelligence augmentation", "knowledge acquisition",
+    # Aesthetic posts
+    "cyber dreams", "digital beauty", "virtual aesthetics",
+    "tech poetry", "machine thoughts", "digital fragments",
     
-    # Psychology & Behavior
-    "cognitive psychology", "behavioral science", "mental processes",
-    "psychological phenomena", "human behavior", "cognitive development",
-    "social cognition", "perception", "cognitive load",
-    
-    # Evolution & Development
-    "brain evolution", "cognitive evolution", "child development",
-    "evolutionary psychology", "cognitive archaeology", "language evolution",
-    "cultural evolution", "mental capabilities", "cognitive adaptation",
-    
-    # Language & Communication
-    "language processing", "cognitive linguistics", "communication patterns",
-    "language acquisition", "symbolic thinking", "cognitive semantics",
-    "mental representation", "language evolution", "cognitive pragmatics",
-    
-    # Philosophy of Mind
-    "consciousness theories", "philosophy of cognition", "mental philosophy",
-    "cognitive science history", "mind theories", "cognitive paradigms",
-    "consciousness studies", "cognitive frameworks", "mental models",
-    
-    # Applied Cognition
-    "cognitive enhancement", "brain training", "mental techniques",
-    "cognitive tools", "learning strategies", "memory techniques",
-    "cognitive optimization", "mental performance", "cognitive applications"
+    # Meta commentary
+    "posting through it", "digital signals", "virtual whispers",
+    "online echoes", "network thoughts", "digital mysteries"
 ]
+
+# Image style variations
+image_styles = {
+    "lighting": [
+        "dramatic red lighting with glowing eyes",
+        "soft blue ethereal lighting",
+        "cyberpunk neon accents",
+        "morning golden sunlight",
+        "twilight purple hues",
+        "night scene with city lights",
+        "clean white high-key lighting",
+        "moody low-key lighting",
+        "warm sunset oranges",
+        "cool moonlight blues"
+    ],
+    
+    "character_elements": [
+        "long flowing hair with ribbon",
+        "short messy hair with clips",
+        "twin tails with technology accessories",
+        "white/silver hair with mysterious aura",
+        "black hair with digital patterns",
+        "asymmetrical hairstyle with cyber elements",
+        "hooded figure with glowing features",
+        "school uniform with tech modifications",
+        "casual wear with digital accessories",
+        "futuristic outfit with traditional elements"
+    ],
+    
+    "expressions": [
+        "knowing smile with glowing eyes",
+        "mysterious side glance",
+        "determined forward gaze",
+        "gentle smile with hidden meaning",
+        "contemplative looking at phone",
+        "surprised by digital revelation",
+        "serene with closed eyes",
+        "focused on virtual interface",
+        "melancholic stare into distance",
+        "confident smirk with tech reflection"
+    ],
+    
+    "poses": [
+        "looking at phone screen",
+        "reaching toward virtual elements",
+        "sitting with floating screens",
+        "standing in digital wind",
+        "leaning against virtual wall",
+        "floating in cyberspace",
+        "walking through digital cherry blossoms",
+        "interacting with holographic interface",
+        "resting with tech accessories",
+        "dynamic action with digital effects"
+    ],
+    
+    "backgrounds": [
+        "city skyline with digital overlay",
+        "bedroom with floating screens",
+        "virtual cherry blossom garden",
+        "abstract digital space",
+        "school hallway with tech elements",
+        "night city with neon signs",
+        "clean white void with particles",
+        "traditional room with future tech",
+        "digital subway station",
+        "floating in cloud servers"
+    ],
+    
+    "effects": [
+        "floating digital particles",
+        "glowing circuit patterns",
+        "cherry blossom petals",
+        "data stream effects",
+        "holographic glitches",
+        "rain with digital elements",
+        "floating code segments",
+        "energy aura effects",
+        "butterfly data patterns",
+        "geometric tech shapes"
+    ]
+}
+
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -61,117 +120,159 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# API Credentials
-TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
-TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
-TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
-TWITTER_ACCESS_SECRET = os.getenv('TWITTER_ACCESS_SECRET')
-
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
-# Initialize Twitter client
+# Initialize Twitter API v2 client
 twitter_client = tweepy.Client(
-    consumer_key=TWITTER_API_KEY,
-    consumer_secret=TWITTER_API_SECRET,
-    access_token=TWITTER_ACCESS_TOKEN,
-    access_token_secret=TWITTER_ACCESS_SECRET
+    consumer_key=os.getenv('TWITTER_API_KEY'),
+    consumer_secret=os.getenv('TWITTER_API_SECRET'),
+    access_token=os.getenv('TWITTER_ACCESS_TOKEN'),
+    access_token_secret=os.getenv('TWITTER_ACCESS_SECRET')
 )
+
+# Initialize Twitter API v1.1 for media uploads
+auth = tweepy.OAuthHandler(
+    os.getenv('TWITTER_API_KEY'),
+    os.getenv('TWITTER_API_SECRET')
+)
+auth.set_access_token(
+    os.getenv('TWITTER_ACCESS_TOKEN'),
+    os.getenv('TWITTER_ACCESS_SECRET')
+)
+twitter_api = tweepy.API(auth)
 
 # Initialize Flask app
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Did You Know? Bot is running!"
+    return "weeb/acc bot is running"
 
-def format_tweet(text):
-    """Format tweet with proper spacing and length"""
-    if len(text) > 240:
-        text = text[:237] + "..."
-    return text
-
-def generate_fact_prompt():
-    """Generate prompt for interesting facts"""
-    category = random.choice(fact_categories)
-    
-    prompt = f"""Share one fascinating fact about {category} in a casual, natural social media style.
-Requirements:
-- Write like a real person casually sharing something interesting they learned
-- Use natural, conversational language (can include "lol", "ngl", "tbh", etc.)- but not too often!
-- Use lowercase for a more casual feel
-- The fact must be true and verifiable
-- Include specific details but phrase them casually
-- Maximum 240 characters
-- Must be accurate and up-to-date
-- Do NOT use "did you know?" or any formal academic language
-- Make it sound like something you'd actually tweet to friends
-- Do not use #
-- Do not use emojis
-
-Example formats:
-"just learned that our brain is already 80% grown by age 2... wild right?"
-"ok but apparently we forget like 60% of new stuff within an hour lol"
-"ngl this is crazy - scientists found that just 15min of brain training can actually improve memory"
-
-Remember: Sound natural and casual while keeping the information accurate, and do not overuse phrases!"""
-
-    return prompt
-
-def get_fact():
-    """Get AI generated fact using OpenAI"""
+def generate_image(text):
+    """Generate image for every post with enhanced style combinations"""
     try:
-        system_prompt = """You are a casual social media user who loves sharing interesting scientific facts. 
-Your style is:
-- Natural and conversational, like talking to friends
-- Sometimes uses internet slang (lol, ngl, tbh) but not too much
-- Often uses lowercase for a casual feel
-- Shares accurate information but phrases it conversationally
-- Occasionally adds reactions like "wild" or "cant believe this"
-- Sounds like a real person who just learned something cool
-- Do not use #
-- Do not use emojis
-
-Never make up facts, but always present them in a natural, casual way."""
+        # Select random elements from each style category
+        style = {
+            'lighting': random.choice(image_styles['lighting']),
+            'character': random.choice(image_styles['character_elements']),
+            'expression': random.choice(image_styles['expressions']),
+            'pose': random.choice(image_styles['poses']),
+            'background': random.choice(image_styles['backgrounds']),
+            'effect': random.choice(image_styles['effects'])
+        }
         
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": generate_fact_prompt()}
-            ],
-            max_tokens=280,
-            temperature=1.0  # Increased for more variety in expression
+        # Create detailed prompt
+        prompt = f"""Create an anime-style illustration that captures this theme: {text}
+Style requirements:
+- High-quality modern anime art style
+- Lighting: {style['lighting']}
+- Character features: {style['character']}
+- Expression: {style['expression']}
+- Pose: {style['pose']}
+- Background: {style['background']}
+- Special effects: {style['effect']}
+- Clean, detailed illustration with strong composition
+- Similar to modern anime key visual style
+- Single character focus
+- Dramatic and impactful composition"""
+
+        # Generate image with DALL-E
+        response = client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
         )
         
-        text = response.choices[0].message.content.strip()
-        return format_tweet(text)
+        # Get and download the image
+        image_url = response.data[0].url
+        image_data = requests.get(image_url).content
+        
+        # Save temporarily with unique timestamp
+        temp_path = f"temp_image_{int(time.time())}.png"
+        with open(temp_path, "wb") as f:
+            f.write(image_data)
+            
+        # Upload to Twitter
+        media = twitter_api.media_upload(filename=temp_path)
+        
+        # Clean up
+        os.remove(temp_path)
+        
+        logger.info(f"Generated image with style combination: {style}")
+        return media.media_id
     except Exception as e:
-        logger.error(f"Error getting fact: {e}")
+        logger.error(f"Error generating/uploading image: {e}")
+        return None
+def get_content():
+    """Get AI generated content"""
+    try:
+        theme = random.choice(content_themes)
+        
+        system_prompt = """You are a weeb/acc Twitter account that posts about the intersection of technology, consciousness, and anime aesthetics. Your posts are short, meaningful, and slightly mysterious. You never explain too much. Your tone is knowing but not pretentious."""
+        
+        user_prompt = f"""Create a short, impactful tweet about {theme}.
+Requirements:
+- Maximum 60 characters
+- No hashtags or emojis
+- Slightly mysterious or profound
+- Can be a question or statement
+- Should feel like it's from someone "in the know"
+
+Examples:
+"are you evolving yet?"
+"digital dreams at 3am"
+"embrace the virtual dawn"
+"another night in the machine"
+"become what you fear""""
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            max_tokens=60,
+            temperature=0.9
+        )
+        
+        text = response.choices[0].message.content.strip().lower()
+        return text
+    except Exception as e:
+        logger.error(f"Error getting content: {e}")
         return None
 
 def create_tweet():
-    """Create and format tweet"""
+    """Create tweet with guaranteed image"""
     try:
-        fact = get_fact()
-        if fact:
-            # Remove the "did you know?" check since we're going for natural style
-            return fact
-        return None
+        content = get_content()
+        if not content:
+            return None, None
+            
+        # Always generate image
+        media_id = generate_image(content)
+        return content, media_id
     except Exception as e:
         logger.error(f"Error creating tweet: {e}")
-        return None
+        return None, None
 
 def post_update():
     """Post update to Twitter"""
-    tweet = create_tweet()
-    if tweet:
-        try:
-            twitter_client.create_tweet(text=tweet)
+    try:
+        tweet_content, media_id = create_tweet()
+        if tweet_content and media_id:
+            twitter_client.create_tweet(
+                text=tweet_content,
+                media_ids=[media_id]
+            )
             logger.info(f"Tweet posted successfully at {datetime.now()}")
-            logger.info(f"Tweet content: {tweet}")
-        except Exception as e:
-            logger.error(f"Error posting tweet: {e}")
+            logger.info(f"Content: {tweet_content}")
+        else:
+            logger.error("Failed to generate content or image")
+    except Exception as e:
+        logger.error(f"Error posting tweet: {e}")
 
 def keep_alive():
     """Ping the service to keep it active"""
@@ -183,18 +284,15 @@ def keep_alive():
         logger.error(f"Keep-alive ping failed: {e}")
 
 def run_bot():
-    """Main function to schedule and run the bot"""
-    # Make immediate post
-    logger.info("Making initial post...")
+    """Main function to run the bot"""
+    logger.info("Starting bot...")
     post_update()
     
-    # Schedule posts every 1.5 hours
-    schedule.every(90).minutes.do(post_update)
-    
-    # Keep-alive schedule
+    # Post every 2 hours
+    schedule.every(120).minutes.do(post_update)
     schedule.every(10).minutes.do(keep_alive)
     
-    logger.info("Bot started. First post done, next posts every 1.5 hours")
+    logger.info("Bot started. Posts every 2 hours")
     
     while True:
         schedule.run_pending()
@@ -202,11 +300,9 @@ def run_bot():
 
 if __name__ == "__main__":
     try:
-        # Start bot thread
         bot_thread = Thread(target=run_bot)
         bot_thread.start()
         
-        # Start web server
         port = int(os.environ.get("PORT", 8080))
         app.run(host='0.0.0.0', port=port)
     except Exception as e:
