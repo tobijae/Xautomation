@@ -222,11 +222,11 @@ Requirements:
 - Should feel like it's from someone "in the know"
 
 Examples:
-"are you evolving yet?"
-"digital dreams at 3am"
-"embrace the virtual dawn"
-"another night in the machine"
-"become what you fear""""
+'are you evolving yet?'
+'digital dreams at 3am'
+'embrace the virtual dawn'
+'another night in the machine'
+'become what you fear'"""  # Changed double quotes to single quotes for examples
 
         response = client.chat.completions.create(
             model="gpt-4",
