@@ -222,11 +222,11 @@ Requirements:
 - Should feel like it's from someone "in the know"
 
 Examples:
-'are you evolving yet?'
-'digital dreams at 3am'
-'embrace the virtual dawn'
-'another night in the machine'
-'become what you fear'"""  # Changed double quotes to single quotes for examples
+are you evolving yet?
+digital dreams at 3am
+embrace the virtual dawn
+another night in the machine
+become what you fear"""  # Changed double quotes to single quotes for examples
 
         response = client.chat.completions.create(
             model="gpt-4",
@@ -289,7 +289,7 @@ def run_bot():
     post_update()
     
     # Post every 2 hours
-    schedule.every(120).minutes.do(post_update)
+    schedule.every(90).minutes.do(post_update)
     schedule.every(10).minutes.do(keep_alive)
     
     logger.info("Bot started. Posts every 2 hours")
