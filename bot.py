@@ -288,11 +288,11 @@ def run_bot():
     logger.info("Starting bot...")
     post_update()
     
-    # Post every 2 hours
+    # Post every 90 minutes
     schedule.every(90).minutes.do(post_update)
     schedule.every(10).minutes.do(keep_alive)
     
-    logger.info("Bot started. Posts every 2 hours")
+    logger.info("Bot started. Posts every 1.5 hours")
     
     while True:
         schedule.run_pending()
