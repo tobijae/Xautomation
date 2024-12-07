@@ -12,103 +12,116 @@ import logging
 import requests
 from openai import OpenAI
 
-# Content themes for the aesthetic
+# Content themes for the aesthetic - removed pixel-heavy themes, added more varied concepts
 content_themes = [
     # Tech x Anime fusion
-    "tech acceleration", "digital escape", "virtual dreams",
-    "ai consciousness", "digital enlightenment", "cyber aesthetics",
+    "digital transcendence", "virtual awakening", "electronic emotions",
+    "ai consciousness", "synthetic harmony", "cyber renaissance",
     
     # Cultural commentary
-    "online existence", "digital identity", "virtual society",
-    "artificial dreams", "digital evolution", "tech spirituality",
+    "digital identity", "virtual society", "synthetic memories",
+    "artificial dreams", "techno-spiritual awakening", "network consciousness",
     
     # Aesthetic posts
-    "cyber dreams", "digital beauty", "virtual aesthetics",
-    "tech poetry", "machine thoughts", "digital fragments",
+    "ethereal datascape", "neon reverie", "virtual sakura",
+    "machine poetry", "synthetic aurora", "digital shrine",
     
     # Meta commentary
-    "posting through it", "digital signals", "virtual whispers",
-    "online echoes", "network thoughts", "digital mysteries"
+    "ghost in the feed", "neural whispers", "virtual echoes",
+    "network prayers", "digital enlightenment", "synthetic truth"
 ]
 
-# Image style variations
+# Image style variations with enhanced depth and female character focus
 image_styles = {
     "lighting": [
-        "dramatic red lighting with glowing eyes",
-        "soft blue ethereal lighting",
-        "cyberpunk neon accents",
-        "morning golden sunlight",
-        "twilight purple hues",
-        "night scene with city lights",
-        "clean white high-key lighting",
-        "moody low-key lighting",
-        "warm sunset oranges",
-        "cool moonlight blues"
+        "dramatic volumetric lighting with lens flares",
+        "ethereal backlight creating a heavenly glow",
+        "cyberpunk neon with ambient occlusion",
+        "morning sunrays through cherry blossoms",
+        "bioluminescent ambient lighting",
+        "city lights reflecting off rain puddles",
+        "soft rim lighting with atmospheric fog",
+        "dramatic shadows with glowing accents",
+        "sunset god rays through clouds",
+        "ethereal particle lighting"
     ],
     
     "character_elements": [
-        "long flowing hair with ribbon",
-        "short messy hair with clips",
-        "twin tails with technology accessories",
-        "white/silver hair with mysterious aura",
-        "black hair with digital patterns",
-        "asymmetrical hairstyle with cyber elements",
-        "hooded figure with glowing features",
-        "school uniform with tech modifications",
-        "casual wear with digital accessories",
-        "futuristic outfit with traditional elements"
+        "long flowing hair with technological hair ornaments",
+        "elegant twin tails with floating data streams",
+        "white hair with glowing gradient tips",
+        "hime cut with cybernetic accessories",
+        "wavy hair with embedded crystal interfaces",
+        "floating hair with digital butterfly clips",
+        "braided hair with holographic ribbons",
+        "asymmetrical cut with tech highlights",
+        "short bob with digital flowers",
+        "dynamic hair with energy patterns"
     ],
     
     "expressions": [
-        "knowing smile with glowing eyes",
-        "mysterious side glance",
-        "determined forward gaze",
-        "gentle smile with hidden meaning",
-        "contemplative looking at phone",
-        "surprised by digital revelation",
-        "serene with closed eyes",
-        "focused on virtual interface",
-        "melancholic stare into distance",
-        "confident smirk with tech reflection"
+        "serene smile with glowing eyes",
+        "determined gaze with digital tears",
+        "gentle contemplation with floating displays",
+        "mysterious half-smile",
+        "ethereal wonderment",
+        "confident smirk with tech augments",
+        "dreamy upward gaze",
+        "peaceful meditation with data streams",
+        "knowing look with holographic reflections",
+        "innocent curiosity with virtual elements"
     ],
     
     "poses": [
-        "looking at phone screen",
-        "reaching toward virtual elements",
-        "sitting with floating screens",
-        "standing in digital wind",
-        "leaning against virtual wall",
-        "floating in cyberspace",
-        "walking through digital cherry blossoms",
-        "interacting with holographic interface",
-        "resting with tech accessories",
-        "dynamic action with digital effects"
+        "floating in digital wind",
+        "elegant stance with flowing dress",
+        "sitting on virtual throne",
+        "dancing with data streams",
+        "praying with holographic elements",
+        "reaching toward virtual butterflies",
+        "traditional shrine maiden pose",
+        "floating in zero gravity",
+        "graceful turn with flowing elements",
+        "meditating with tech aura"
     ],
     
     "backgrounds": [
-        "city skyline with digital overlay",
-        "bedroom with floating screens",
-        "virtual cherry blossom garden",
-        "abstract digital space",
-        "school hallway with tech elements",
-        "night city with neon signs",
-        "clean white void with particles",
-        "traditional room with future tech",
-        "digital subway station",
-        "floating in cloud servers"
+        "infinite virtual shrine gates",
+        "floating crystal cities",
+        "digital cherry blossom garden",
+        "ethereal cloud servers",
+        "cyberpunk shrine with holographs",
+        "quantum space with fractals",
+        "virtual library with endless shelves",
+        "digital ocean with data waves",
+        "floating islands with tech trees",
+        "abstract neural networks"
     ],
     
     "effects": [
-        "floating digital particles",
-        "glowing circuit patterns",
-        "cherry blossom petals",
-        "data stream effects",
-        "holographic glitches",
-        "rain with digital elements",
-        "floating code segments",
-        "energy aura effects",
-        "butterfly data patterns",
-        "geometric tech shapes"
+        "flowing data ribbons",
+        "ethereal butterfly projections",
+        "flowering virtual sakura",
+        "floating light orbs",
+        "holographic mandalas",
+        "energy wave patterns",
+        "crystalline fractals",
+        "flowing light streams",
+        "digital wind effects",
+        "quantum particle trails"
+    ],
+    
+    "depth_elements": [
+        "multiple lighting layers",
+        "atmospheric perspective fog",
+        "detailed foreground elements",
+        "floating midground particles",
+        "distant background structures",
+        "overlapping transparent layers",
+        "dynamic shadow casting",
+        "volumetric light shafts",
+        "particle depth complexity",
+        "layered holographic elements"
     ]
 }
 
@@ -150,32 +163,33 @@ def home():
     return "weeb/acc bot is running"
 
 def generate_image(text):
-    """Generate image for every post with enhanced style combinations"""
+    """Generate image with enhanced depth and female character focus"""
     try:
-        # Select random elements from each style category
         style = {
             'lighting': random.choice(image_styles['lighting']),
             'character': random.choice(image_styles['character_elements']),
             'expression': random.choice(image_styles['expressions']),
             'pose': random.choice(image_styles['poses']),
             'background': random.choice(image_styles['backgrounds']),
-            'effect': random.choice(image_styles['effects'])
+            'effect': random.choice(image_styles['effects']),
+            'depth': random.choice(image_styles['depth_elements'])
         }
         
-        # Create detailed prompt
-        prompt = f"""Create an anime-style illustration that captures this theme: {text}
+        prompt = f"""Create a detailed anime-style illustration featuring a female character that captures this theme: {text}
 Style requirements:
 - High-quality modern anime art style
 - Lighting: {style['lighting']}
-- Character features: {style['character']}
+- Female character features: {style['character']}
 - Expression: {style['expression']}
 - Pose: {style['pose']}
 - Background: {style['background']}
 - Special effects: {style['effect']}
-- Clean, detailed illustration with strong composition
-- Similar to modern anime key visual style
-- Single character focus
-- Dramatic and impactful composition"""
+- Depth enhancement: {style['depth']}
+- Elegant and refined female character design
+- Strong sense of depth and atmosphere
+- Dramatic composition with multiple layers
+- Attention to fine details and textures
+- Similar to high-end anime key visual style"""
 
         # Generate image with DALL-E
         response = client.images.generate(
