@@ -9,6 +9,7 @@ from threading import Thread
 from flask import Flask
 import logging
 import requests
+import json
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -46,21 +47,45 @@ def get_grok_news():
         }
         
         data = {
+            "model": "grok-1",
             "messages": [{
                 "role": "user",
                 "content": "What are some big stuff that happened in the last 1.5 hours?"
-            }]
+            }],
+            "temperature": 0.7,
+            "max_tokens": 150
         }
         
+        logger.info("Sending request to Grok API...")
         response = requests.post(
             "https://api.x.ai/v1/chat/completions",
             headers=headers,
             json=data
         )
         
-        return response.json()["choices"][0]["message"]["content"]
+        # Log the raw response for debugging
+        logger.info(f"Raw Grok API response: {response.text}")
+        
+        if response.status_code != 200:
+            logger.error(f"Grok API error. Status: {response.status_code}, Response: {response.text}")
+            return None
+            
+        response_data = response.json()
+        
+        if 'choices' in response_data and len(response_data['choices']) > 0:
+            return response_data['choices'][0]['message']['content']
+        else:
+            logger.error(f"Unexpected Grok API response format: {response_data}")
+            return None
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error when calling Grok API: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error with Grok API response: {e}")
+        return None
     except Exception as e:
-        logger.error(f"Error getting news from Grok: {e}")
+        logger.error(f"Unexpected error getting news from Grok: {e}")
         return None
 
 def generate_narrated_news(news):
@@ -76,19 +101,34 @@ def generate_narrated_news(news):
         prompt = f"""As {narrator['name']}, narrate this news in your {narrator['style']} style in under 200 characters: {news}"""
         
         data = {
+            "model": "grok-1",
             "messages": [{
                 "role": "user",
                 "content": prompt
-            }]
+            }],
+            "temperature": 0.7,
+            "max_tokens": 100
         }
         
+        logger.info(f"Requesting narration as {narrator['name']}...")
         response = requests.post(
             "https://api.x.ai/v1/chat/completions",
             headers=headers,
             json=data
         )
         
-        return response.json()["choices"][0]["message"]["content"]
+        if response.status_code != 200:
+            logger.error(f"Grok API error during narration. Status: {response.status_code}, Response: {response.text}")
+            return None
+            
+        response_data = response.json()
+        
+        if 'choices' in response_data and len(response_data['choices']) > 0:
+            return response_data['choices'][0]['message']['content']
+        else:
+            logger.error(f"Unexpected Grok API response format during narration: {response_data}")
+            return None
+            
     except Exception as e:
         logger.error(f"Error generating narration: {e}")
         return None
@@ -96,13 +136,17 @@ def generate_narrated_news(news):
 def post_update():
     """Post update to Twitter"""
     try:
+        logger.info("Starting post update process...")
         news = get_grok_news()
         if news:
+            logger.info(f"Got news from Grok: {news}")
             narrated_news = generate_narrated_news(news)
             if narrated_news:
+                logger.info(f"Generated narration: {narrated_news}")
                 twitter_client.create_tweet(text=narrated_news)
                 logger.info(f"Tweet posted successfully at {datetime.now()}")
-                logger.info(f"Content: {narrated_news}")
+        else:
+            logger.error("Failed to get news from Grok")
     except Exception as e:
         logger.error(f"Error posting tweet: {e}")
 
