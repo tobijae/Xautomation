@@ -72,9 +72,8 @@ def get_grok_news():
             
         response_data = response.json()
         
-                    if 'choices' in response_data and len(response_data['choices']) > 0:
-                content = response_data['choices'][0]['message']['content']
-                return f"{narrator['name'].upper()}: {content}"
+        if 'choices' in response_data and len(response_data['choices']) > 0:
+            return response_data['choices'][0]['message']['content']
         else:
             logger.error(f"Unexpected Grok API response format: {response_data}")
             return None
@@ -102,12 +101,12 @@ def generate_narrated_news(news):
         prompt = f"""As {narrator['name']}, narrate this news in your {narrator['style']} style in under 200 characters: {news}"""
         
         data = {
-            "model": "grok-beta",
+            "model": "grok-2-1212",
             "messages": [{
                 "role": "user",
                 "content": prompt
             }],
-            "temperature": 0.7,
+            "temperature": 0.9,
             "max_tokens": 100
         }
         
@@ -125,7 +124,8 @@ def generate_narrated_news(news):
         response_data = response.json()
         
         if 'choices' in response_data and len(response_data['choices']) > 0:
-            return response_data['choices'][0]['message']['content']
+            content = response_data['choices'][0]['message']['content']
+            return f"{narrator['name'].upper()}: {content}"
         else:
             logger.error(f"Unexpected Grok API response format during narration: {response_data}")
             return None
