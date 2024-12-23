@@ -72,8 +72,9 @@ def get_grok_news():
             
         response_data = response.json()
         
-        if 'choices' in response_data and len(response_data['choices']) > 0:
-            return response_data['choices'][0]['message']['content']
+                    if 'choices' in response_data and len(response_data['choices']) > 0:
+                content = response_data['choices'][0]['message']['content']
+                return f"{narrator['name'].upper()}: {content}"
         else:
             logger.error(f"Unexpected Grok API response format: {response_data}")
             return None
