@@ -47,12 +47,12 @@ def get_grok_news():
         }
         
         data = {
-            "model": "grok-1",
+            "model": "grok-2-1212",
             "messages": [{
                 "role": "user",
                 "content": "What are some big stuff that happened in the last 1.5 hours?"
             }],
-            "temperature": 0.7,
+            "temperature": 0.9,
             "max_tokens": 150
         }
         
@@ -101,7 +101,7 @@ def generate_narrated_news(news):
         prompt = f"""As {narrator['name']}, narrate this news in your {narrator['style']} style in under 200 characters: {news}"""
         
         data = {
-            "model": "grok-1",
+            "model": "grok-beta",
             "messages": [{
                 "role": "user",
                 "content": prompt
