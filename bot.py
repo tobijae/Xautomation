@@ -50,7 +50,7 @@ def get_grok_news():
             "model": "grok-2-1212",
             "messages": [{
                 "role": "user",
-                "content": "What are some big stuff that happened in the last 1.5 hours?"
+                "content": "What are the absolute most recent major events or breaking news happening right now in real-time? Focus only on events from the last few hours. Only mention very recent events."
             }],
             "temperature": 0.9,
             "max_tokens": 150
