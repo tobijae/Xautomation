@@ -27,7 +27,7 @@ twitter_client = tweepy.Client(
 app = Flask(__name__)
 
 # Define the start date of Trump's presidency
-TRUMP_START_DATE = datetime(2017, 1, 20)
+TRUMP_START_DATE = datetime(2025, 1, 20)
 
 # Function to calculate the day count of Trump's presidency
 def calculate_presidency_day():
