@@ -1,15 +1,12 @@
 import tweepy
-import random
-from datetime import datetime
 import schedule
 import time
+from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
-from threading import Thread
 from flask import Flask
 import logging
-import requests
-import json
+from threading import Thread
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -29,160 +26,65 @@ twitter_client = tweepy.Client(
 # Initialize Flask app
 app = Flask(__name__)
 
-# Characters who can narrate the news
-narrators = [
-    {"name": "Gandalf", "style": "wise and mysterious"},
-    {"name": "Yoda", "style": "cryptic and sagely"},
-    {"name": "Doctor Strange", "style": "mystical and academic"},
-    {"name": "Morpheus", "style": "philosophical and profound"},
-    {"name": "Dumbledore", "style": "whimsical and knowing"}
-]
+# Define the start date of Trump's presidency
+TRUMP_START_DATE = datetime(2017, 1, 20)
 
-def get_grok_news():
-    """Get news from Grok API"""
+# Function to calculate the day count of Trump's presidency
+def calculate_presidency_day():
+    today = datetime.utcnow().date()
+    return (today - TRUMP_START_DATE.date()).days + 1
+
+# Function to post a daily update
+def post_daily_update():
     try:
-        headers = {
-            "Authorization": f"Bearer {os.getenv('XAI_API_KEY')}",
-            "Content-Type": "application/json"
-        }
-        
-        data = {
-            "model": "grok-2-1212",
-            "messages": [{
-                "role": "user",
-                "content": "What are the absolute most recent major events or breaking news happening right now in real-time? Focus only on events from the last few hours. Only mention very recent events."
-            }],
-            "temperature": 0.9,
-            "max_tokens": 150
-        }
-        
-        logger.info("Sending request to Grok API...")
-        response = requests.post(
-            "https://api.x.ai/v1/chat/completions",
-            headers=headers,
-            json=data
-        )
-        
-        # Log the raw response for debugging
-        logger.info(f"Raw Grok API response: {response.text}")
-        
-        if response.status_code != 200:
-            logger.error(f"Grok API error. Status: {response.status_code}, Response: {response.text}")
-            return None
-            
-        response_data = response.json()
-        
-        if 'choices' in response_data and len(response_data['choices']) > 0:
-            return response_data['choices'][0]['message']['content']
-        else:
-            logger.error(f"Unexpected Grok API response format: {response_data}")
-            return None
-            
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request error when calling Grok API: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error with Grok API response: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error getting news from Grok: {e}")
-        return None
+        day_count = calculate_presidency_day()
+        tweet_text = f"Day {day_count} of Trump's Presidency."
 
-def generate_narrated_news(news):
-    """Generate character-narrated news"""
-    try:
-        narrator = random.choice(narrators)
-        
-        headers = {
-            "Authorization": f"Bearer {os.getenv('XAI_API_KEY')}",
-            "Content-Type": "application/json"
-        }
-        
-        prompt = f"""As {narrator['name']}, narrate this news in your {narrator['style']} style in under 200 characters: {news}"""
-        
-        data = {
-            "model": "grok-2-1212",
-            "messages": [{
-                "role": "user",
-                "content": prompt
-            }],
-            "temperature": 0.9,
-            "max_tokens": 100
-        }
-        
-        logger.info(f"Requesting narration as {narrator['name']}...")
-        response = requests.post(
-            "https://api.x.ai/v1/chat/completions",
-            headers=headers,
-            json=data
-        )
-        
-        if response.status_code != 200:
-            logger.error(f"Grok API error during narration. Status: {response.status_code}, Response: {response.text}")
-            return None
-            
-        response_data = response.json()
-        
-        if 'choices' in response_data and len(response_data['choices']) > 0:
-            content = response_data['choices'][0]['message']['content']
-            return f"{narrator['name'].upper()}: {content}"
-        else:
-            logger.error(f"Unexpected Grok API response format during narration: {response_data}")
-            return None
-            
-    except Exception as e:
-        logger.error(f"Error generating narration: {e}")
-        return None
+        # Optionally add other random facts or content here
+        additional_content = get_random_addition()
+        if additional_content:
+            tweet_text += f"\n\n{additional_content}"
 
-def post_update():
-    """Post update to Twitter"""
-    try:
-        logger.info("Starting post update process...")
-        news = get_grok_news()
-        if news:
-            logger.info(f"Got news from Grok: {news}")
-            narrated_news = generate_narrated_news(news)
-            if narrated_news:
-                logger.info(f"Generated narration: {narrated_news}")
-                twitter_client.create_tweet(text=narrated_news)
-                logger.info(f"Tweet posted successfully at {datetime.now()}")
-        else:
-            logger.error("Failed to get news from Grok")
+        # Post the tweet
+        twitter_client.create_tweet(text=tweet_text)
+        logger.info(f"Successfully posted tweet: {tweet_text}")
     except Exception as e:
-        logger.error(f"Error posting tweet: {e}")
+        logger.error(f"Error posting daily update: {e}")
 
+# Function to get additional random content
+def get_random_addition():
+    content_options = [
+        "Fun Fact: The White House has 132 rooms, including 35 bathrooms.",
+        "This Day in History: In 1789, George Washington was unanimously elected as the first U.S. President.",
+        "Quote of the Day: \"Make America Great Again!\" - Donald Trump",
+        "Did you know? The U.S. President earns $400,000 annually during their term.",
+        "Trivia: James Buchanan was the only U.S. president never to marry."
+    ]
+    return random.choice(content_options)
+
+# Flask route for health checks
 @app.route('/')
 def home():
-    return "News narrator bot is running"
+    return "Trump Presidency Bot is running"
 
-def keep_alive():
-    """Ping the service to keep it active"""
-    try:
-        url = "https://xautomation.onrender.com"
-        response = requests.get(url)
-        logger.info(f"Keep-alive ping successful: {datetime.now()}")
-    except Exception as e:
-        logger.error(f"Keep-alive ping failed: {e}")
-
+# Function to schedule and run the bot
 def run_bot():
-    """Main function to run the bot"""
-    logger.info("Starting bot...")
-    post_update()
-    
-    schedule.every(90).minutes.do(post_update)
-    schedule.every(10).minutes.do(keep_alive)
-    
-    logger.info("Bot started. Posts every 1.5 hours")
-    
+    logger.info("Starting Trump Presidency Bot...")
+
+    # Schedule daily posts at a specific time (e.g., 12:00 PM UTC)
+    schedule.every().day.at("12:00").do(post_daily_update)
+
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        time.sleep(60)  # Check every minute
 
 if __name__ == "__main__":
     try:
+        # Start the bot in a separate thread
         bot_thread = Thread(target=run_bot)
         bot_thread.start()
-        
+
+        # Run Flask app for health checks
         port = int(os.environ.get("PORT", 8080))
         app.run(host='0.0.0.0', port=port)
     except Exception as e:
