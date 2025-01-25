@@ -1,21 +1,23 @@
+import discord
+import openai
 import tweepy
-import schedule
-import time
-from datetime import datetime, timedelta
+import requests
 import os
-from dotenv import load_dotenv
-from flask import Flask
 import logging
+import asyncio
 from threading import Thread
 
-# Logging setup
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
+# --- Discord Setup ---
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+discord_client = discord.Client(intents=intents)
 
-# Initialize Twitter API v2 client
+# --- Twitter Setup ---
 twitter_client = tweepy.Client(
     consumer_key=os.getenv('TWITTER_API_KEY'),
     consumer_secret=os.getenv('TWITTER_API_SECRET'),
@@ -23,69 +25,86 @@ twitter_client = tweepy.Client(
     access_token_secret=os.getenv('TWITTER_ACCESS_SECRET')
 )
 
-# Initialize Flask app
-app = Flask(__name__)
+# --- Constants ---
+MIDJOURNEY_CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID'))
+MIDJOURNEY_BOT_ID = 936929561302675456  # MidJourney bot ID
+OPENAI_PROMPT_TEMPLATE = "Generate a creative image prompt about futuristic politics:"
 
-# Define the start date of Trump's presidency
-TRUMP_START_DATE = datetime(2025, 1, 20)
+# --- Global Variables ---
+latest_image_url = None
 
-# Function to calculate the day count of Trump's presidency
-def calculate_presidency_day():
-    today = datetime.utcnow().date()
-    return (today - TRUMP_START_DATE.date()).days + 1
+# ============================================
+# Core Functions
+# ============================================
 
-# Function to post a daily update
-def post_daily_update():
+def generate_prompt():
+    """Generate a MidJourney prompt using OpenAI"""
     try:
-        day_count = calculate_presidency_day()
-        tweet_text = f"Day {day_count} of Trump's Presidency."
-
-        # Optionally add other random facts or content here
-        additional_content = get_random_addition()
-        if additional_content:
-            tweet_text += f"\n\n{additional_content}"
-
-        # Post the tweet
-        twitter_client.create_tweet(text=tweet_text)
-        logger.info(f"Successfully posted tweet: {tweet_text}")
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=OPENAI_PROMPT_TEMPLATE,
+            max_tokens=50
+        )
+        prompt_text = response.choices[0].text.strip()
+        return f"/imagine {prompt_text} --v 6"  # Generates 4 images by default
     except Exception as e:
-        logger.error(f"Error posting daily update: {e}")
+        logger.error(f"OpenAI error: {e}")
+        return None
 
-# Function to get additional random content
-def get_random_addition():
-    content_options = [
-        "Fun Fact: The White House has 132 rooms, including 35 bathrooms.",
-        "This Day in History: In 1789, George Washington was unanimously elected as the first U.S. President.",
-        "Quote of the Day: \"Make America Great Again!\" - Donald Trump",
-        "Did you know? The U.S. President earns $400,000 annually during their term.",
-        "Trivia: James Buchanan was the only U.S. president never to marry."
-    ]
-    return random.choice(content_options)
+async def post_to_midjourney(prompt):
+    """Send prompt to MidJourney Discord channel"""
+    channel = discord_client.get_channel(MIDJOURNEY_CHANNEL_ID)
+    await channel.send(prompt)
 
-# Flask route for health checks
-@app.route('/')
-def home():
-    return "Trump Presidency Bot is running"
+@discord_client.event
+async def on_ready():
+    logger.info(f'Discord bot logged in as {discord_client.user}')
+    asyncio.create_task(midjourney_loop())
 
-# Function to schedule and run the bot
-def run_bot():
-    logger.info("Starting Trump Presidency Bot...")
+@discord_client.event
+async def on_message(message):
+    global latest_image_url
+    if message.author.id == MIDJOURNEY_BOT_ID and message.attachments:
+        # Capture first image from the 4 generated
+        latest_image_url = message.attachments[0].url
+        logger.info(f"Captured image URL: {latest_image_url}")
 
-    # Schedule daily posts at a specific time (e.g., 12:00 PM UTC)
-    schedule.every().day.at("12:00").do(post_daily_update)
-
+async def midjourney_loop():
+    """Automation loop (runs every 1.5 hours)"""
     while True:
-        schedule.run_pending()
-        time.sleep(60)  # Check every minute
+        try:
+            # Generate and send prompt
+            prompt = generate_prompt()
+            if not prompt:
+                await asyncio.sleep(60)
+                continue
 
+            await post_to_midjourney(prompt)
+            logger.info(f"Sent to MidJourney: {prompt}")
+
+            # Wait for images (3 minutes max)
+            for _ in range(18):  # 18 * 10s = 3 minutes
+                await asyncio.sleep(10)
+                if latest_image_url:
+                    break
+
+            if latest_image_url:
+                # Download and post to X
+                response = requests.get(latest_image_url)
+                media = twitter_client.media_upload(filename="ai_image.jpg", file=response.content)
+                twitter_client.create_tweet(text="New AI-generated artwork!", media_ids=[media.media_id])
+                logger.info("Posted to X/Twitter!")
+                latest_image_url = None  # Reset
+
+            # Wait exactly 1.5 hours (5400 seconds)
+            await asyncio.sleep(5400)
+
+        except Exception as e:
+            logger.error(f"Loop error: {e}")
+            await asyncio.sleep(60)
+
+# ============================================
+# Run the Bot
+# ============================================
 if __name__ == "__main__":
-    try:
-        # Start the bot in a separate thread
-        bot_thread = Thread(target=run_bot)
-        bot_thread.start()
-
-        # Run Flask app for health checks
-        port = int(os.environ.get("PORT", 8080))
-        app.run(host='0.0.0.0', port=port)
-    except Exception as e:
-        logger.error(f"Error starting bot: {e}")
+    discord_client.run(os.getenv('DISCORD_BOT_TOKEN'))
